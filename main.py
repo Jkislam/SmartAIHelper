@@ -53,7 +53,9 @@ def image_to_notes():
     })
 
 # 🔹 ৪. রুটিন প্ল্যানার
-@app.route('/routine', methods=['POST'])
+@app.route('/')
+def home():
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
 def routine():
     data = request.json
     subjects = data.get("subjects", "")
@@ -68,3 +70,4 @@ def routine():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))  # Render PORT ধরে
     app.run(host='0.0.0.0', port=port)
+
