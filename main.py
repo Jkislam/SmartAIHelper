@@ -17,7 +17,9 @@ def home():
     return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
 
 # 🔹 ১. ভিডিও ➡️ সামারি
-@app.route('/summary', methods=['POST'])
+@app.route('/')
+def home():
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
 def summarize():
     data = request.json
     text = data.get("text", "")
@@ -48,7 +50,9 @@ def summarize():
     return jsonify({"summary": response['choices'][0]['message']['content']})
 
 # 🔹 ২. অধ্যায় ➡️ MCQ
-@app.route('/mcq', methods=['POST'])
+@app.route('/')
+def home():
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
 def mcq():
     data = request.json
     chapter = data.get("chapter", "")
@@ -60,7 +64,9 @@ def mcq():
     return jsonify({"mcqs": response['choices'][0]['message']['content']})
 
 # 🔹 ৩. ছবি ➡️ নোট
-@app.route('/image-to-notes', methods=['POST'])
+@app.route('/')
+def home():
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
 def image_to_notes():
     data = request.json
     image_data = data.get("image_base64", "")
@@ -78,7 +84,9 @@ def image_to_notes():
     })
 
 # 🔹 ৪. রুটিন প্ল্যানার
-@app.route('/routine', methods=['POST'])
+@app.route('/')
+def home():
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
 def routine():
     data = request.json
     subjects = data.get("subjects", "")
@@ -93,3 +101,4 @@ def routine():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
     app.run(host='0.0.0.0', port=port)
+
