@@ -4,6 +4,7 @@ import pytesseract
 from PIL import Image
 import base64
 import io
+import os
 from config import API_KEY
 
 openai.api_key = API_KEY
@@ -65,4 +66,5 @@ def routine():
     return jsonify({"routine": response['choices'][0]['message']['content']})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=7860)
+    port = int(os.environ.get("PORT", 7860))  # Render PORT ধরে
+    app.run(host='0.0.0.0', port=port)
