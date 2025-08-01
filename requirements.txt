@@ -1,4 +1,6 @@
+flask
 streamlit
 openai
 pillow
 pytesseract
+
