@@ -12,20 +12,18 @@ from urllib.parse import urlparse, parse_qs
 openai.api_key = API_KEY
 app = Flask(__name__)
 
+# 🔹 হোম রুট (শুধু একবার)
 @app.route('/')
 def home():
     return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
 
 # 🔹 ১. ভিডিও ➡️ সামারি
-@app.route('/')
-def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+@app.route('/summary', methods=['POST'])
 def summarize():
     data = request.json
     text = data.get("text", "")
     video_url = data.get("video_url", "")
 
-    # যদি ভিডিও ইউআরএল দেওয়া হয়
     if video_url:
         try:
             parsed_url = urlparse(video_url)
@@ -50,9 +48,7 @@ def summarize():
     return jsonify({"summary": response['choices'][0]['message']['content']})
 
 # 🔹 ২. অধ্যায় ➡️ MCQ
-@app.route('/')
-def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+@app.route('/mcq', methods=['POST'])
 def mcq():
     data = request.json
     chapter = data.get("chapter", "")
@@ -64,9 +60,7 @@ def mcq():
     return jsonify({"mcqs": response['choices'][0]['message']['content']})
 
 # 🔹 ৩. ছবি ➡️ নোট
-@app.route('/')
-def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+@app.route('/image-to-notes', methods=['POST'])
 def image_to_notes():
     data = request.json
     image_data = data.get("image_base64", "")
@@ -84,9 +78,7 @@ def image_to_notes():
     })
 
 # 🔹 ৪. রুটিন প্ল্যানার
-@app.route('/')
-def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+@app.route('/routine', methods=['POST'])
 def routine():
     data = request.json
     subjects = data.get("subjects", "")
@@ -101,4 +93,3 @@ def routine():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
     app.run(host='0.0.0.0', port=port)
-
