@@ -1,6 +1,8 @@
+youtube-transcript-api
 flask
 streamlit
 openai
 pillow
 pytesseract
+
 
