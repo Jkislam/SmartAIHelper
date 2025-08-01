@@ -6,27 +6,49 @@ import base64
 import io
 import os
 from config import API_KEY
+from youtube_transcript_api import YouTubeTranscriptApi
+from urllib.parse import urlparse, parse_qs
 
 openai.api_key = API_KEY
 app = Flask(__name__)
 
-# 🔹 ১. ভিডিও ➡️ সামারি
 @app.route('/')
 def home():
     return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+
+# 🔹 ১. ভিডিও ➡️ সামারি
+@app.route('/summary', methods=['POST'])
 def summarize():
     data = request.json
     text = data.get("text", "")
+    video_url = data.get("video_url", "")
+
+    # যদি ভিডিও ইউআরএল দেওয়া হয়
+    if video_url:
+        try:
+            parsed_url = urlparse(video_url)
+            video_id = parse_qs(parsed_url.query).get("v")
+            if video_id:
+                video_id = video_id[0]
+                transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['bn', 'en'])
+                text = " ".join([entry['text'] for entry in transcript])
+            else:
+                return jsonify({"error": "Invalid YouTube URL"}), 400
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
+
+    if not text:
+        return jsonify({"error": "No text or video transcript provided."}), 400
+
+    prompt = f"এই বক্তব্যটা সংক্ষেপে বাংলা ভাষায় বুঝিয়ে দাও:\n{text}"
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": f"এই বক্তব্যটা সংক্ষেপে বাংলা ভাষায় বুঝিয়ে দাও:\n{text}"}]
+        messages=[{"role": "user", "content": prompt}]
     )
     return jsonify({"summary": response['choices'][0]['message']['content']})
 
 # 🔹 ২. অধ্যায় ➡️ MCQ
-@app.route('/')
-def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+@app.route('/mcq', methods=['POST'])
 def mcq():
     data = request.json
     chapter = data.get("chapter", "")
@@ -38,16 +60,13 @@ def mcq():
     return jsonify({"mcqs": response['choices'][0]['message']['content']})
 
 # 🔹 ৩. ছবি ➡️ নোট
-@app.route('/')
-def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+@app.route('/image-to-notes', methods=['POST'])
 def image_to_notes():
     data = request.json
     image_data = data.get("image_base64", "")
     image = Image.open(io.BytesIO(base64.b64decode(image_data)))
     extracted_text = pytesseract.image_to_string(image, lang="eng+ben")
 
-    # Now summarize
     prompt = f"এই লেখাটার বাংলা ভাষায় সংক্ষিপ্ত নোট বানাও:\n{extracted_text}"
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -59,9 +78,7 @@ def image_to_notes():
     })
 
 # 🔹 ৪. রুটিন প্ল্যানার
-@app.route('/')
-def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+@app.route('/routine', methods=['POST'])
 def routine():
     data = request.json
     subjects = data.get("subjects", "")
@@ -74,7 +91,5 @@ def routine():
     return jsonify({"routine": response['choices'][0]['message']['content']})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 7860))  # Render PORT ধরে
+    port = int(os.environ.get("PORT", 7860))
     app.run(host='0.0.0.0', port=port)
-
-
