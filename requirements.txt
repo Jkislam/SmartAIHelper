@@ -4,5 +4,7 @@ streamlit
 openai
 pillow
 pytesseract
+PyMuPDF
+requests
 
 
