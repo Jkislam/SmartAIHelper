@@ -12,10 +12,10 @@ from urllib.parse import urlparse, parse_qs
 openai.api_key = API_KEY
 app = Flask(__name__)
 
-# 🔹 হোম রুট (শুধু একবার)
+# 🔹 হোম রুট
 @app.route('/')
 def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes or /routine</h3>"
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes, /image-to-mcq, /image-to-cq or /routine</h3>"
 
 # 🔹 ১. ভিডিও ➡️ সামারি
 @app.route('/summary', methods=['POST'])
@@ -77,7 +77,43 @@ def image_to_notes():
         "summary": response['choices'][0]['message']['content']
     })
 
-# 🔹 ৪. রুটিন প্ল্যানার
+# 🔹 ৪. ছবি ➡️ MCQ
+@app.route('/image-to-mcq', methods=['POST'])
+def image_to_mcq():
+    data = request.json
+    image_data = data.get("image_base64", "")
+    image = Image.open(io.BytesIO(base64.b64decode(image_data)))
+    extracted_text = pytesseract.image_to_string(image, lang="eng+ben")
+
+    prompt = f"এই লেখাটার ভিত্তিতে ৫টি MCQ তৈরি করো, অপশনসহ এবং সঠিক উত্তরসহ:\n{extracted_text}"
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return jsonify({
+        "extracted_text": extracted_text,
+        "mcqs": response['choices'][0]['message']['content']
+    })
+
+# 🔹 ৫. ছবি ➡️ CQ
+@app.route('/image-to-cq', methods=['POST'])
+def image_to_cq():
+    data = request.json
+    image_data = data.get("image_base64", "")
+    image = Image.open(io.BytesIO(base64.b64decode(image_data)))
+    extracted_text = pytesseract.image_to_string(image, lang="eng+ben")
+
+    prompt = f"এই লেখাটার ভিত্তিতে একটি সৃজনশীল প্রশ্ন তৈরি করো। অনুচ্ছেদ, প্রশ্ন এবং উত্তরসহ:\n{extracted_text}"
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return jsonify({
+        "extracted_text": extracted_text,
+        "cq": response['choices'][0]['message']['content']
+    })
+
+# 🔹 ৬. রুটিন প্ল্যানার
 @app.route('/routine', methods=['POST'])
 def routine():
     data = request.json
