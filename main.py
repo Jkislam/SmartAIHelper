@@ -5,6 +5,9 @@ from PIL import Image
 import base64
 import io
 import os
+import fitz  # PyMuPDF
+import json
+import requests
 from config import API_KEY
 from youtube_transcript_api import YouTubeTranscriptApi
 from urllib.parse import urlparse, parse_qs
@@ -12,10 +15,14 @@ from urllib.parse import urlparse, parse_qs
 openai.api_key = API_KEY
 app = Flask(__name__)
 
+# লিংক ফাইল লোড
+with open("pdf_links.json", "r", encoding="utf-8") as f:
+    pdf_links = json.load(f)
+
 # 🔹 হোম রুট
 @app.route('/')
 def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes, /image-to-mcq, /image-to-cq or /routine</h3>"
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes, /image-to-mcq, /image-to-cq, /routine, /chapter-to-mcq, /chapter-to-cq</h3>"
 
 # 🔹 ১. ভিডিও ➡️ সামারি
 @app.route('/summary', methods=['POST'])
@@ -126,7 +133,68 @@ def routine():
     )
     return jsonify({"routine": response['choices'][0]['message']['content']})
 
+# 🔹 ৭. অধ্যায় ➡️ MCQ (PDF থেকে)
+@app.route('/chapter-to-mcq', methods=['POST'])
+def chapter_to_mcq():
+    data = request.json
+    class_name = data.get("class")
+    subject = data.get("subject")
+    chapter = data.get("chapter")
+
+    if not (class_name and subject and chapter):
+        return jsonify({"error": "class, subject and chapter required"}), 400
+
+    try:
+        pdf_url = pdf_links[class_name][subject]
+        response = requests.get(pdf_url)
+        pdf_bytes = response.content
+        text = ""
+        with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
+            for page in doc:
+                text += page.get_text()
+
+        prompt = f"এই অধ্যায়ের নাম: '{chapter}'। নিচে বইয়ের কিছু লেখা আছে। এই অধ্যায়ের অংশ খুঁজে নিয়ে ৫টি MCQ তৈরি করো, অপশনসহ এবং সঠিক উত্তর দাও:\n\n{text[:4000]}"
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return jsonify({"mcqs": response['choices'][0]['message']['content']})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 🔹 ৮. অধ্যায় ➡️ CQ (PDF থেকে)
+@app.route('/chapter-to-cq', methods=['POST'])
+def chapter_to_cq():
+    data = request.json
+    class_name = data.get("class")
+    subject = data.get("subject")
+    chapter = data.get("chapter")
+
+    if not (class_name and subject and chapter):
+        return jsonify({"error": "class, subject and chapter required"}), 400
+
+    try:
+        pdf_url = pdf_links[class_name][subject]
+        response = requests.get(pdf_url)
+        pdf_bytes = response.content
+        text = ""
+        with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
+            for page in doc:
+                text += page.get_text()
+
+        prompt = f"এই অধ্যায়ের নাম: '{chapter}'। নিচে বইয়ের কিছু লেখা আছে। এই অধ্যায়ের অংশ খুঁজে নিয়ে ২টি সৃজনশীল প্রশ্ন (CQ) তৈরি করো, প্রতিটির জন্য নম্বরসহ ধাপ ভাগ করে উত্তরসহ:\n\n{text[:4000]}"
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return jsonify({"cqs": response['choices'][0]['message']['content']})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
     app.run(host='0.0.0.0', port=port)
-
