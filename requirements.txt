@@ -1,8 +1,8 @@
 flask
 youtube-transcript-api
-streamlit
 openai
 pillow
 pytesseract
 PyMuPDF
 requests
+streamlit
