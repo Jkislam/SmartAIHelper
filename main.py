@@ -22,7 +22,7 @@ with open("pdf_links.json", "r", encoding="utf-8") as f:
 # 🔹 হোম রুট
 @app.route('/')
 def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes, /image-to-mcq, /image-to-cq, /routine, /chapter-to-mcq, /chapter-to-cq</h3>"
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes, /image-to-mcq, /image-to-cq, /routine, /chapter-to-mcq, /chapter-to-cq, /image-to-answer, /text-to-word-meaning, /text-to-answer</h3>"
 
 # 🔹 ১. ভিডিও ➡️ সামারি
 @app.route('/summary', methods=['POST'])
@@ -195,7 +195,50 @@ def chapter_to_cq():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# 🔹 ৯. ছবি ➡️ উত্তর (যেকোনো প্রশ্ন)
+@app.route('/image-to-answer', methods=['POST'])
+def image_to_answer():
+    data = request.json
+    image_data = data.get("image_base64", "")
+    image = Image.open(io.BytesIO(base64.b64decode(image_data)))
+    extracted_text = pytesseract.image_to_string(image, lang="eng+ben")
+
+    prompt = f"প্রশ্ন: {extracted_text}\nউত্তর বাংলা ভাষায় বিস্তারিতভাবে দাও।"
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return jsonify({
+        "extracted_text": extracted_text,
+        "answer": response['choices'][0]['message']['content']
+    })
+
+# 🔹 ১০. টেক্সট ➡️ শব্দার্থ
+@app.route('/text-to-word-meaning', methods=['POST'])
+def text_to_word_meaning():
+    data = request.json
+    text = data.get("text", "")
+
+    prompt = f"নিচের লেখার প্রতিটি গুরুত্বপূর্ণ শব্দের বাংলা অর্থ ও প্রয়োগ দাও:\n{text}"
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return jsonify({"word_meanings": response['choices'][0]['message']['content']})
+
+# 🔹 ১১. টেক্সট ➡️ উত্তর
+@app.route('/text-to-answer', methods=['POST'])
+def text_to_answer():
+    data = request.json
+    question = data.get("question", "")
+
+    prompt = f"প্রশ্ন: {question}\nউত্তর বাংলা ভাষায় বিস্তারিতভাবে দাও।"
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return jsonify({"answer": response['choices'][0]['message']['content']})
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
     app.run(host='0.0.0.0', port=port)
-
