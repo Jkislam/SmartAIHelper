@@ -19,12 +19,16 @@ app = Flask(__name__)
 with open("pdf_links.json", "r", encoding="utf-8") as f:
     pdf_links = json.load(f)
 
-# 🔹 হোম রুট
+# ===========================
+# হোম রুট
+# ===========================
 @app.route('/')
 def home():
-    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST to /summary, /mcq, /image-to-notes, /image-to-mcq, /image-to-cq, /routine, /chapter-to-mcq, /chapter-to-cq, /image-to-answer, /text-to-word-meaning, /text-to-answer</h3>"
+    return "<h3>✅ Smart AI Helper API is Live.<br>Use POST requests to endpoints like /summary, /mcq, /image-to-notes, /image-to-mcq, /image-to-cq, /routine, /chapter-to-mcq, /chapter-to-cq, /image-to-answer, /text-to-word-meaning, /text-to-answer, /math-solver, /image-to-math-solver</h3>"
 
-# 🔹 ১. ভিডিও ➡️ সামারি
+# ===========================
+# ১. ভিডিও ➡️ সামারি
+# ===========================
 @app.route('/summary', methods=['POST'])
 def summarize():
     data = request.json
@@ -54,7 +58,9 @@ def summarize():
     )
     return jsonify({"summary": response['choices'][0]['message']['content']})
 
-# 🔹 ২. অধ্যায় ➡️ MCQ
+# ===========================
+# ২. অধ্যায় ➡️ MCQ
+# ===========================
 @app.route('/mcq', methods=['POST'])
 def mcq():
     data = request.json
@@ -66,7 +72,9 @@ def mcq():
     )
     return jsonify({"mcqs": response['choices'][0]['message']['content']})
 
-# 🔹 ৩. ছবি ➡️ নোট
+# ===========================
+# ৩. ছবি ➡️ নোট
+# ===========================
 @app.route('/image-to-notes', methods=['POST'])
 def image_to_notes():
     data = request.json
@@ -84,7 +92,9 @@ def image_to_notes():
         "summary": response['choices'][0]['message']['content']
     })
 
-# 🔹 ৪. ছবি ➡️ MCQ
+# ===========================
+# ৪. ছবি ➡️ MCQ
+# ===========================
 @app.route('/image-to-mcq', methods=['POST'])
 def image_to_mcq():
     data = request.json
@@ -102,7 +112,9 @@ def image_to_mcq():
         "mcqs": response['choices'][0]['message']['content']
     })
 
-# 🔹 ৫. ছবি ➡️ CQ
+# ===========================
+# ৫. ছবি ➡️ CQ
+# ===========================
 @app.route('/image-to-cq', methods=['POST'])
 def image_to_cq():
     data = request.json
@@ -120,7 +132,9 @@ def image_to_cq():
         "cq": response['choices'][0]['message']['content']
     })
 
-# 🔹 ৬. রুটিন প্ল্যানার
+# ===========================
+# ৬. রুটিন প্ল্যানার
+# ===========================
 @app.route('/routine', methods=['POST'])
 def routine():
     data = request.json
@@ -133,7 +147,9 @@ def routine():
     )
     return jsonify({"routine": response['choices'][0]['message']['content']})
 
-# 🔹 ৭. অধ্যায় ➡️ MCQ (PDF থেকে)
+# ===========================
+# ৭. অধ্যায় ➡️ MCQ (PDF থেকে)
+# ===========================
 @app.route('/chapter-to-mcq', methods=['POST'])
 def chapter_to_mcq():
     data = request.json
@@ -164,7 +180,9 @@ def chapter_to_mcq():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 🔹 ৮. অধ্যায় ➡️ CQ (PDF থেকে)
+# ===========================
+# ৮. অধ্যায় ➡️ CQ (PDF থেকে)
+# ===========================
 @app.route('/chapter-to-cq', methods=['POST'])
 def chapter_to_cq():
     data = request.json
@@ -195,7 +213,9 @@ def chapter_to_cq():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 🔹 ৯. ছবি ➡️ উত্তর (যেকোনো প্রশ্ন)
+# ===========================
+# ৯. ছবি ➡️ উত্তর
+# ===========================
 @app.route('/image-to-answer', methods=['POST'])
 def image_to_answer():
     data = request.json
@@ -203,7 +223,7 @@ def image_to_answer():
     image = Image.open(io.BytesIO(base64.b64decode(image_data)))
     extracted_text = pytesseract.image_to_string(image, lang="eng+ben")
 
-    prompt = f"প্রশ্ন: {extracted_text}\nউত্তর বাংলা ভাষায় বিস্তারিতভাবে দাও।"
+    prompt = f"প্রশ্ন: {extracted_text}\nএটির সঠিক উত্তর বাংলা ভাষায় দাও।"
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}]
@@ -213,32 +233,74 @@ def image_to_answer():
         "answer": response['choices'][0]['message']['content']
     })
 
-# 🔹 ১০. টেক্সট ➡️ শব্দার্থ
+# ===========================
+# ১০. টেক্সট ➡️ শব্দার্থ
+# ===========================
 @app.route('/text-to-word-meaning', methods=['POST'])
 def text_to_word_meaning():
     data = request.json
     text = data.get("text", "")
 
-    prompt = f"নিচের লেখার প্রতিটি গুরুত্বপূর্ণ শব্দের বাংলা অর্থ ও প্রয়োগ দাও:\n{text}"
+    prompt = f"এই শব্দগুলোর বাংলা অর্থ দাও:\n{text}"
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}]
     )
     return jsonify({"word_meanings": response['choices'][0]['message']['content']})
 
-# 🔹 ১১. টেক্সট ➡️ উত্তর
+# ===========================
+# ১১. টেক্সট ➡️ উত্তর
+# ===========================
 @app.route('/text-to-answer', methods=['POST'])
 def text_to_answer():
     data = request.json
     question = data.get("question", "")
 
-    prompt = f"প্রশ্ন: {question}\nউত্তর বাংলা ভাষায় বিস্তারিতভাবে দাও।"
+    prompt = f"প্রশ্ন: {question}\nএটির সঠিক উত্তর বাংলা ভাষায় দাও।"
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}]
     )
     return jsonify({"answer": response['choices'][0]['message']['content']})
 
+# ===========================
+# ১২. ম্যাথ সলভার
+# ===========================
+@app.route('/math-solver', methods=['POST'])
+def math_solver():
+    data = request.json
+    math_problem = data.get("problem", "")
+
+    prompt = f"সমস্যা: {math_problem}\nএটি ধাপে ধাপে সমাধান করো এবং প্রতিটি ধাপের ব্যাখ্যা দাও।"
+    response = openai.ChatCompletion.create(
+        model="gpt-4",  # বেশি সঠিকতার জন্য gpt-4
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return jsonify({"solution": response['choices'][0]['message']['content']})
+
+# ===========================
+# ১৩. ছবি ➡️ ম্যাথ সলভার
+# ===========================
+@app.route('/image-to-math-solver', methods=['POST'])
+def image_to_math_solver():
+    data = request.json
+    image_data = data.get("image_base64", "")
+    image = Image.open(io.BytesIO(base64.b64decode(image_data)))
+    math_text = pytesseract.image_to_string(image, lang="eng")
+
+    prompt = f"সমস্যা: {math_text}\nএটি ধাপে ধাপে সমাধান করো এবং প্রতিটি ধাপের ব্যাখ্যা দাও।"
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return jsonify({
+        "extracted_text": math_text,
+        "solution": response['choices'][0]['message']['content']
+    })
+
+# ===========================
+# রান
+# ===========================
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
     app.run(host='0.0.0.0', port=port)
